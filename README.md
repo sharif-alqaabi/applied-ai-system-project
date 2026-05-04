@@ -343,42 +343,117 @@ swap the scoring engine or the AI layer without rebuilding the other.
 
 ## Testing Summary
 
-### What was tested
+### Running the evaluation
+
+```bash
+# Unit tests (no API key required)
+pytest
+
+# Reliability benchmark + confidence report
+python -m src.eval
+```
+
+### Test suite breakdown
 
 | File | Tests | What it covers |
 |---|---|---|
 | `tests/test_recommender.py` | 2 | OOP `Recommender` class, `explain_recommendation` |
 | `tests/test_rag.py` | 14 | Knowledge base loading, context retrieval, edge cases |
 | `tests/test_agent.py` | 11 | `evaluate_fit` logic, result formatting, message building |
-| **Total** | **26** | All pass (`pytest` with no flags) |
+| `tests/test_eval.py` | 23 | Confidence scoring, benchmark harness, report generation |
+| **Total** | **50** | **50 / 50 pass** (`pytest` with no flags) |
+
+### Reliability benchmark (`python -m src.eval`)
+
+Six hand-labeled test cases measure whether the expected song appears within
+the required rank and track a normalized confidence score (0.0–1.0).
+Confidence = `score / theoretical_max`, where the maximum is the sum of all
+weights for the features present in the profile.
+
+```
+======================================================================
+  RELIABILITY EVALUATION — Applied AI Music Recommender
+======================================================================
+  Benchmark : 6 test cases against data/songs.csv
+  Mode      : balanced (default scoring)
+----------------------------------------------------------------------
+
+  TC-01  PASS  'Library Rain' at rank 1 (expected in top-1)
+         Profile    : lofi, chill, energy 0.35
+         Top result : 'Library Rain'  score 6.65
+         Confidence : 0.985  (strong fit)
+
+  TC-02  PASS  'Sunrise City' at rank 1 (expected in top-1)
+         Profile    : pop, happy, energy 0.80
+         Top result : 'Sunrise City'  score 6.60
+         Confidence : 0.978  (strong fit)
+
+  TC-03  PASS  'Storm Runner' at rank 1 (expected in top-1)
+         Profile    : rock, intense, energy 0.92
+         Top result : 'Storm Runner'  score 6.54
+         Confidence : 0.969  (strong fit)
+
+  TC-04  PASS  'Neon Sprint' at rank 1 (expected in top-1)
+         Profile    : edm, excited, energy 0.95
+         Top result : 'Neon Sprint'  score 6.73
+         Confidence : 0.997  (strong fit)
+
+  TC-05  PASS  'Porchlight Letters' at rank 1 (expected in top-2)
+         Profile    : folk, nostalgic, energy 0.31
+         Top result : 'Porchlight Letters'  score 5.22
+         Confidence : 0.773  (moderate fit)
+         Note       : Catalog has no folk+nostalgic song; wins on genre +
+                      acoustic fit but misses the mood match.
+
+  TC-06  PASS  'Quiet Constellations' at rank 1 (expected in top-2)
+         Profile    : classical, moody, energy 0.92
+         Top result : 'Quiet Constellations'  score 3.99
+         Confidence : 0.591  (weak fit)
+         Note       : Known limitation: genre bonus overrides energy mismatch.
+
+----------------------------------------------------------------------
+  RESULTS    : 6 / 6 passed  (100.0%)
+  Confidence : avg 0.882  |  min 0.591 (TC-06)  |  max 0.997 (TC-04)
+----------------------------------------------------------------------
+  Confidence breakdown:
+    Strong  (>= 0.9) : 4 / 6
+    Moderate(0.7–0.9): 1 / 6
+    Weak    (<  0.7) : 1 / 6
+======================================================================
+```
+
+**Summary:** 6 out of 6 benchmark cases pass. Confidence scores average 0.882.
+Cases TC-01 through TC-04 all score above 0.96 — the recommender is highly
+reliable when genre, mood, and energy are all aligned. TC-05 drops to 0.773
+because the catalog has no song with both `folk` genre and `nostalgic` mood,
+so the best available result misses the mood signal. TC-06 scores 0.591 — the
+known limitation where a 2.0-point genre bonus outweighs a 0.74 energy
+mismatch, producing a result that is genre-correct but energetically wrong.
 
 ### What worked well
 
-- The fit evaluator correctly distinguished strong matches (exact genre + mood
-  + close energy) from weak matches (genre-only or energy-only) across all
-  test profiles.
-- RAG retrieval handled case-insensitive lookups and gracefully returned a
-  fallback message when a genre or mood was not in the knowledge base —
-  no crashes on unknown input.
-- The diversity penalty prevented the recommender from returning three lofi
-  songs from the same artist in a row, which would have happened without it.
-- The agentic loop stayed within its iteration budget in every manual run
-  tested; it never needed more than four iterations to reach `end_turn`.
+- The confidence score proved useful as a *diagnostic*, not just a pass/fail:
+  TC-05 passing at 0.773 immediately signals "this profile has a gap in the
+  catalog" without needing to read the individual song data.
+- RAG retrieval handled case-insensitive lookups and returned a graceful
+  fallback for unknown genres/moods — no crashes on unexpected input.
+- The diversity penalty prevented the recommender from filling the top-5 with
+  all-lofi results from the same artist.
+- All 50 unit tests run in under one second — fast enough to run on every save.
 
 ### What did not work / limitations found
 
-- **The Conflicted Edge Case profile** (classical + high energy) exposed that
-  the genre weight (2.0 points) is strong enough to override a poor energy fit.
-  A user who genuinely wants loud classical music would not get it from this
-  catalog, and the scoring would not flag the mismatch clearly enough.
-- **The test suite does not cover the live API loop** (`MusicAgent.run()`).
-  Testing the full agentic loop requires a real API key and introduces
-  nondeterminism, so those tests were left as a future improvement. The
-  helper methods — `_evaluate_fit`, `_format_recs`, `_build_user_message` —
-  are fully covered because they are pure functions.
-- **The knowledge base is hand-written and static.** If a new genre or mood
-  tag appears in the CSV, the agent retrieves no context for it. A production
-  system would auto-generate or periodically refresh the knowledge base.
+- **TC-06 (Conflicted Edge Case)** exposed that the 2.0-point genre weight is
+  too dominant. A profile asking for "loud classical music" gets a song with
+  energy 0.18 against a target of 0.92 — the genre bonus wins regardless. A
+  future fix would reduce the genre weight or add a minimum energy threshold.
+- **The live API loop is not unit-tested.** `MusicAgent.run()` requires a real
+  API key and introduces nondeterminism, so only its deterministic helper
+  methods are covered. A future improvement would use `unittest.mock` to patch
+  the Anthropic client.
+- **The knowledge base is static.** If a new genre or mood tag appears in the
+  CSV, the agent retrieves no context for it. A production system would
+  auto-generate or refresh the knowledge base from a live source.
 
 ### What this taught me about testing AI systems
 
@@ -387,6 +462,9 @@ two layers: a deterministic layer that could be unit-tested normally, and an
 AI layer that could only be verified by running it and reading the output.
 The most useful tests were the ones that checked the *inputs and outputs* of
 the tool functions rather than trying to simulate Claude's responses.
+The confidence score was the most valuable addition — it turned the benchmark
+from a binary pass/fail list into a spectrum that shows exactly where the
+system is confident and where it is guessing.
 
 ---
 
@@ -436,13 +514,15 @@ applied-ai-system-project/
 │   └── music_knowledge.json      # RAG knowledge base (genres + moods)
 ├── src/
 │   ├── main.py                   # CLI entry point (--ai flag for agentic mode)
-│   ├── recommender.py            # scoring engine, diversity penalty, modes
+│   ├── recommender.py            # scoring engine, confidence scoring, diversity penalty
 │   ├── rag.py                    # knowledge base loader + context retriever
-│   └── agent.py                  # MusicAgent — Claude agentic loop
+│   ├── agent.py                  # MusicAgent — Claude agentic loop
+│   └── eval.py                   # reliability benchmark + confidence report
 ├── tests/
-│   ├── test_recommender.py       # OOP recommender tests (original)
+│   ├── test_recommender.py       # OOP recommender tests (2 tests)
 │   ├── test_rag.py               # RAG retrieval tests (14 tests)
-│   └── test_agent.py             # agent helper tests (11 tests)
+│   ├── test_agent.py             # agent helper tests (11 tests)
+│   └── test_eval.py              # confidence scoring + benchmark tests (23 tests)
 ├── model_card.md
 ├── reflection.md
 └── requirements.txt

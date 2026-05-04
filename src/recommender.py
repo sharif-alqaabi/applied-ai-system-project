@@ -163,6 +163,55 @@ class Recommender:
         return score
 
 
+def compute_confidence(
+    score: float,
+    user_prefs: Dict,
+    weights: Dict[str, float] | None = None,
+) -> float:
+    """
+    Return a normalized 0.0–1.0 confidence value for a raw recommendation score.
+
+    Confidence = score / theoretical_max, where theoretical_max is the highest
+    possible score achievable given the features present in user_prefs and the
+    active weights.  A score of 1.0 means the top song matched every specified
+    preference perfectly; 0.0 means no features matched at all.
+    """
+    w = {**DEFAULT_WEIGHTS, **(weights or {})}
+    max_score = 0.0
+
+    if user_prefs.get("genre") is not None:
+        max_score += w["genre"]
+    if user_prefs.get("mood") is not None:
+        max_score += w["mood"]
+    if user_prefs.get("energy") is not None:
+        max_score += w["energy"]
+    # Danceability falls back to energy when not explicitly set (mirrors scoring logic)
+    if user_prefs.get("danceability") is not None or user_prefs.get("energy") is not None:
+        max_score += w["danceability"]
+    if user_prefs.get("likes_acoustic") is not None:
+        max_score += w["acousticness"]
+    if user_prefs.get("tempo_bpm") is not None:
+        max_score += w["tempo_bpm"]
+    if user_prefs.get("valence") is not None:
+        max_score += w["valence"]
+    if _first_pref(user_prefs, "preferred_popularity", "popularity_target") is not None:
+        max_score += w["popularity"]
+    if _first_pref(user_prefs, "preferred_release_decade", "release_decade") is not None:
+        max_score += w["release_decade"]
+    if _first_pref(user_prefs, "preferred_detailed_mood_tag", "detailed_mood_tag") is not None:
+        max_score += w["detailed_mood_tag"]
+    if _first_pref(user_prefs, "target_instrumentalness", "instrumentalness") is not None:
+        max_score += w["instrumentalness"]
+    if _first_pref(user_prefs, "target_liveliness", "liveliness") is not None:
+        max_score += w["liveliness"]
+    if _first_pref(user_prefs, "target_lyric_density", "lyric_density") is not None:
+        max_score += w["lyric_density"]
+
+    if max_score <= 0.0:
+        return 0.0
+    return round(min(1.0, score / max_score), 3)
+
+
 def _first_pref(user_prefs: Dict, *keys: str):
     """Return the first non-None preference value from a list of possible keys."""
     for key in keys:
