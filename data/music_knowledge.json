@@ -1,0 +1,181 @@
+{
+  "genres": {
+    "pop": {
+      "description": "Mainstream pop music balances catchy melodies with high production quality. It typically features clear vocal hooks and commercial appeal.",
+      "typical_energy_range": [0.5, 0.95],
+      "common_moods": ["happy", "excited", "romantic", "confident"],
+      "related_genres": ["indie pop", "dance pop", "edm", "r&b"]
+    },
+    "lofi": {
+      "description": "Lo-fi hip hop emphasizes relaxed tempos, soft textures, and atmospheric beats. It is widely used for studying, focus sessions, and winding down.",
+      "typical_energy_range": [0.2, 0.55],
+      "common_moods": ["chill", "focused", "nostalgic", "introspective"],
+      "related_genres": ["ambient", "jazz", "hip hop"]
+    },
+    "rock": {
+      "description": "Rock spans a broad spectrum from classic guitar-driven tracks to heavy metal. Core traits include electric guitars, strong rhythms, and often intense or rebellious themes.",
+      "typical_energy_range": [0.6, 1.0],
+      "common_moods": ["intense", "energetic", "rebellious", "nostalgic"],
+      "related_genres": ["metal", "indie", "alternative", "punk"]
+    },
+    "ambient": {
+      "description": "Ambient music prioritizes texture, atmosphere, and slow evolution over traditional melody and rhythm. It is designed for background listening or deep relaxation.",
+      "typical_energy_range": [0.1, 0.4],
+      "common_moods": ["peaceful", "ethereal", "calm", "meditative"],
+      "related_genres": ["lofi", "classical", "new age"]
+    },
+    "jazz": {
+      "description": "Jazz features improvisation, complex harmonics, and swing rhythms. It ranges from energetic bebop to relaxed cool jazz, often evoking warmth and sophistication.",
+      "typical_energy_range": [0.3, 0.75],
+      "common_moods": ["relaxed", "warm", "nostalgic", "sophisticated"],
+      "related_genres": ["blues", "soul", "r&b", "lofi"]
+    },
+    "synthwave": {
+      "description": "Synthwave draws from 1980s electronic music, film scores, and video game soundtracks. Heavy synthesizer use creates moody, nostalgic tones.",
+      "typical_energy_range": [0.5, 0.85],
+      "common_moods": ["moody", "nostalgic", "mysterious", "energetic"],
+      "related_genres": ["edm", "electronic", "disco"]
+    },
+    "edm": {
+      "description": "Electronic dance music is built for high-energy environments. It features powerful drops, repetitive build-ups, and synthesized textures optimized for dancing.",
+      "typical_energy_range": [0.75, 1.0],
+      "common_moods": ["excited", "euphoric", "energetic", "confident"],
+      "related_genres": ["pop", "synthwave", "house", "techno"]
+    },
+    "folk": {
+      "description": "Folk music emphasizes acoustic instruments, storytelling lyrics, and authenticity rooted in tradition. It often carries nostalgic or introspective tones.",
+      "typical_energy_range": [0.2, 0.6],
+      "common_moods": ["calm", "nostalgic", "reflective", "warm"],
+      "related_genres": ["country", "indie", "acoustic", "bluegrass"]
+    },
+    "r&b": {
+      "description": "R&B blends soul, funk, and pop into smooth, groove-oriented tracks. It often features rich vocals and themes of love, confidence, and emotion.",
+      "typical_energy_range": [0.4, 0.8],
+      "common_moods": ["romantic", "confident", "sensual", "soulful"],
+      "related_genres": ["soul", "pop", "hip hop", "jazz"]
+    },
+    "metal": {
+      "description": "Metal is defined by heavy distorted guitars, aggressive rhythms, and high intensity. It ranges from melodic to extreme sub-genres but always prioritizes power.",
+      "typical_energy_range": [0.8, 1.0],
+      "common_moods": ["aggressive", "intense", "powerful", "dark"],
+      "related_genres": ["rock", "punk", "hardcore"]
+    },
+    "country": {
+      "description": "Country music blends storytelling with acoustic and electric instruments, often evoking rural life, nostalgia, and emotional honesty.",
+      "typical_energy_range": [0.35, 0.75],
+      "common_moods": ["nostalgic", "wistful", "warm", "reflective"],
+      "related_genres": ["folk", "bluegrass", "pop", "americana"]
+    },
+    "disco": {
+      "description": "Disco is built for the dancefloor — high energy and euphoric, with lush orchestration and a strong four-on-the-floor beat.",
+      "typical_energy_range": [0.7, 0.95],
+      "common_moods": ["joyful", "euphoric", "celebratory", "energetic"],
+      "related_genres": ["funk", "pop", "edm", "r&b"]
+    },
+    "hip hop": {
+      "description": "Hip hop centers on rhythmic vocals over beats, with emphasis on lyrics, culture, and flow. It spans from laid-back to high-energy depending on subgenre.",
+      "typical_energy_range": [0.5, 0.9],
+      "common_moods": ["confident", "aggressive", "introspective", "celebratory"],
+      "related_genres": ["r&b", "lofi", "trap", "soul"]
+    },
+    "classical": {
+      "description": "Classical music encompasses a vast tradition of orchestral, chamber, and solo compositions. It rewards attentive listening and conveys a wide emotional range from serene to dramatic.",
+      "typical_energy_range": [0.1, 0.7],
+      "common_moods": ["peaceful", "dramatic", "serene", "introspective"],
+      "related_genres": ["ambient", "folk", "new age"]
+    },
+    "indie pop": {
+      "description": "Indie pop blends the catchiness of mainstream pop with the creativity of the indie scene, featuring upbeat melodies and often introspective lyrics.",
+      "typical_energy_range": [0.5, 0.85],
+      "common_moods": ["happy", "uplifting", "nostalgic", "bittersweet"],
+      "related_genres": ["pop", "indie", "folk pop", "alternative"]
+    }
+  },
+  "moods": {
+    "happy": {
+      "description": "Upbeat, bright, and feel-good. Look for high valence and moderate-to-high energy.",
+      "ideal_valence_range": [0.65, 1.0],
+      "ideal_energy_range": [0.5, 0.95]
+    },
+    "chill": {
+      "description": "Relaxed and easygoing, not mentally demanding. Low energy with a comfortable, pleasant tone.",
+      "ideal_valence_range": [0.4, 0.75],
+      "ideal_energy_range": [0.15, 0.5]
+    },
+    "intense": {
+      "description": "High energy and emotionally charged. Often drives focus, adrenaline, or strong feeling.",
+      "ideal_valence_range": [0.3, 0.7],
+      "ideal_energy_range": [0.75, 1.0]
+    },
+    "focused": {
+      "description": "Minimal distraction, steady rhythm, and low vocal density. Helps maintain concentration.",
+      "ideal_valence_range": [0.4, 0.7],
+      "ideal_energy_range": [0.3, 0.55]
+    },
+    "moody": {
+      "description": "Emotionally complex and atmospheric. Can feel introspective, melancholic, or mysterious.",
+      "ideal_valence_range": [0.2, 0.55],
+      "ideal_energy_range": [0.35, 0.8]
+    },
+    "romantic": {
+      "description": "Warm, intimate, and emotionally expressive. Often smooth-sounding with moderate energy.",
+      "ideal_valence_range": [0.55, 0.85],
+      "ideal_energy_range": [0.35, 0.7]
+    },
+    "excited": {
+      "description": "High energy and enthusiasm, often with fast tempo and euphoric feel.",
+      "ideal_valence_range": [0.7, 1.0],
+      "ideal_energy_range": [0.75, 1.0]
+    },
+    "nostalgic": {
+      "description": "Evokes a sense of past memories, often bittersweet or warm. Moderate energy and mid valence.",
+      "ideal_valence_range": [0.45, 0.75],
+      "ideal_energy_range": [0.3, 0.65]
+    },
+    "peaceful": {
+      "description": "Calm, serene, and undisturbed. Very low energy with high or neutral valence.",
+      "ideal_valence_range": [0.5, 0.85],
+      "ideal_energy_range": [0.1, 0.35]
+    },
+    "aggressive": {
+      "description": "Forceful and confrontational. Maximum energy with low to mid valence.",
+      "ideal_valence_range": [0.1, 0.5],
+      "ideal_energy_range": [0.85, 1.0]
+    },
+    "joyful": {
+      "description": "Pure happiness expressed through music — celebratory and full of life.",
+      "ideal_valence_range": [0.75, 1.0],
+      "ideal_energy_range": [0.6, 1.0]
+    },
+    "confident": {
+      "description": "Assured, bold, and purposeful. Often features strong rhythms and direct energy.",
+      "ideal_valence_range": [0.5, 0.8],
+      "ideal_energy_range": [0.6, 0.9]
+    },
+    "relaxed": {
+      "description": "Easy and unhurried, with a laid-back groove. Lower energy, warm tone.",
+      "ideal_valence_range": [0.5, 0.8],
+      "ideal_energy_range": [0.2, 0.55]
+    },
+    "calm": {
+      "description": "Quiet and composed, without tension. Often acoustic and slow.",
+      "ideal_valence_range": [0.45, 0.8],
+      "ideal_energy_range": [0.1, 0.45]
+    },
+    "introspective": {
+      "description": "Thoughtful and inward-looking. Often slower and less danceable, with richer lyrical content.",
+      "ideal_valence_range": [0.3, 0.6],
+      "ideal_energy_range": [0.2, 0.6]
+    }
+  },
+  "audio_features": {
+    "energy": "Measures overall intensity from 0.0 (silent/calm) to 1.0 (extremely loud and fast). High energy suits workouts; low energy suits studying or sleep.",
+    "danceability": "How suitable a track is for dancing based on tempo, rhythm stability, and beat strength. High values mean the beat is easy to move to.",
+    "valence": "The musical positivity of a track from 0.0 (sad, dark) to 1.0 (happy, euphoric). High valence brightens mood; low valence feels more somber.",
+    "acousticness": "Confidence that a track is acoustic rather than electronically produced. High values indicate guitar, piano, or orchestral pieces without heavy processing.",
+    "instrumentalness": "Predicts whether a track has no vocals. Values above 0.5 suggest primarily instrumental music; above 0.8 almost certainly instrumental.",
+    "tempo_bpm": "Beats per minute — the pace of the music. Below 80 BPM feels slow and relaxed; above 140 BPM feels fast and intense.",
+    "liveliness": "Detects presence of a live audience. High values suggest a concert recording rather than a studio track.",
+    "lyric_density": "How word-heavy the vocals are. High values mean lots of lyrics (rap, storytelling); low values mean sparse or absent vocals."
+  }
+}

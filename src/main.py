@@ -1,13 +1,24 @@
 """
 Command line runner for the Music Recommender Simulation.
 
-This file helps you quickly run and test your recommender.
+Usage:
+  python -m src.main          # run all scoring-based profiles and experiments
+  python -m src.main --ai     # run the Claude-powered agentic recommender
 
-You will implement the functions in recommender.py:
-- load_songs
-- score_song
-- recommend_songs
+The --ai mode activates two advanced features:
+  - RAG: genre/mood knowledge is retrieved from data/music_knowledge.json
+    before any recommendation is generated, grounding Claude's reasoning
+    in factual audio-feature descriptions.
+  - Agentic workflow: Claude plans (retrieves knowledge), acts (runs the
+    recommender), checks its own work (evaluates fit), and optionally retries
+    with a different scoring mode before writing its final answer.
+
+Requires ANTHROPIC_API_KEY to be set in the environment for --ai mode.
 """
+
+import logging
+import os
+import sys
 
 from src.recommender import (
     DEFAULT_WEIGHTS,
@@ -117,7 +128,60 @@ def run_mode_demo(profile_name: str, mode_name: str, user_prefs: dict, songs: li
     print_recommendations(f"{profile_name} ({mode_name})", recommendations)
 
 
+def run_ai_mode() -> None:
+    """
+    Run the Claude-powered agentic recommender for two demo profiles.
+
+    The agent:
+      1. Retrieves genre/mood knowledge from the RAG knowledge base
+      2. Runs the scoring recommender to get candidates
+      3. Evaluates whether the top result fits the listener
+      4. Retries with a different scoring mode if fit is weak
+      5. Writes a natural-language summary referencing retrieved context
+    """
+    if not os.environ.get("ANTHROPIC_API_KEY"):
+        print(
+            "\n[ERROR] ANTHROPIC_API_KEY is not set.\n"
+            "Export it before running --ai mode:\n"
+            "  export ANTHROPIC_API_KEY=your-key-here\n"
+        )
+        sys.exit(1)
+
+    logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
+
+    from src.agent import MusicAgent
+
+    agent = MusicAgent()
+
+    demo_profiles = ["Chill Lofi", "High-Energy Pop"]
+
+    for profile_name in demo_profiles:
+        prefs = PROFILE_LIBRARY[profile_name]
+        print(f"\n{'='*60}")
+        print(f"  AI-Enhanced Recommendations — {profile_name}")
+        print(f"{'='*60}")
+        print(f"  Genre: {prefs['genre']}  |  Mood: {prefs['mood']}  |  Energy: {prefs['energy']}")
+        print()
+
+        result = agent.run(prefs, k=5)
+
+        print(result["explanation"])
+        print(
+            f"\n[Agent used {result['iterations']} iteration(s), "
+            f"final scoring mode: {result['mode_used']}]"
+        )
+
+        if result["recommendations"]:
+            print("\nFinal ranked songs:")
+            for i, (song, score, reasons) in enumerate(result["recommendations"], start=1):
+                print(f"  {i}. {song['title']} by {song['artist']}  (score: {score:.2f})")
+
+
 def main() -> None:
+    if "--ai" in sys.argv:
+        run_ai_mode()
+        return
+
     songs = load_songs("data/songs.csv")
     print(f"Loaded songs: {len(songs)}")
 
