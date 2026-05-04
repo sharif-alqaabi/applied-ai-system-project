@@ -468,6 +468,25 @@ system is confident and where it is guessing.
 
 ---
 
+## AI Responsibility
+
+See [ai_responsibility.md](ai_responsibility.md) for the full reflection,
+which covers:
+
+- **Limitations and biases** — catalog size, genre-weight filter bubbles,
+  reductive mood/genre labels, and cultural assumptions baked into the
+  knowledge base
+- **Misuse risks and guardrails** — how the same architectural patterns could
+  cause harm in higher-stakes domains, and what was built to prevent it
+  (confidence logging, deterministic evaluator, bounded iteration, cited
+  explanations)
+- **Testing surprises** — why TC-06 was invisible as a design flaw until
+  confidence scoring made it quantitative
+- **AI collaboration** — one genuinely helpful AI suggestion (the confidence
+  score design) and one flawed one (emoji rendering in matplotlib)
+
+---
+
 ## Reflection
 
 Building this project changed how I think about what AI systems actually do.
