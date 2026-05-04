@@ -1,0 +1,146 @@
+{
+  "Sunrise City": {
+    "artist": "Neon Echo",
+    "description": "Neon Echo's flagship pop track built around a euphoric morning-drive feeling. With valence at 0.84 and energy at 0.82, it sits at the bright, danceable end of the pop spectrum. The 118 BPM tempo keeps it moving without crossing into exhausting territory.",
+    "listening_contexts": ["morning commute", "workout warmup", "mood boost", "party pregame"],
+    "standout_features": ["very high valence (0.84)", "strong danceability (0.79)", "high liveliness (0.72)"],
+    "decade_context": "2010s production — layered synths and a prominent vocal hook that defines the era's pop sound.",
+    "pairs_well_with": ["Rooftop Lights", "Gym Hero", "Mirrorball Fever"]
+  },
+  "Midnight Coding": {
+    "artist": "LoRoom",
+    "description": "LoRoom's chill study companion. Instrumentalness of 0.82 means nearly no vocals, making it ideal when lyrics would break concentration. Energy at 0.42 is higher than Library Rain but still firmly in the lofi comfort zone.",
+    "listening_contexts": ["late-night coding", "study sessions", "background focus"],
+    "standout_features": ["highly instrumental (0.82)", "low liveliness (0.18) — studio-quiet atmosphere", "moderate danceability for subtle head-nodding"],
+    "decade_context": "2020s lofi revival — crisp but warm production referencing vinyl-era jazz.",
+    "pairs_well_with": ["Library Rain", "Focus Flow", "Spacewalk Thoughts"]
+  },
+  "Storm Runner": {
+    "artist": "Voltline",
+    "description": "Voltline's rock anthem designed for physical effort and intensity. Energy 0.91 and 152 BPM place it among the fastest tracks in the catalog. Acousticness of 0.10 confirms full electric production with no acoustic softening.",
+    "listening_contexts": ["running", "heavy lifting", "adrenaline moments", "gaming"],
+    "standout_features": ["very high energy (0.91)", "fast tempo (152 BPM)", "minimal acousticness (0.10) — pure electric sound"],
+    "decade_context": "2000s rock production — distorted guitars, tight drums, no electronic padding.",
+    "pairs_well_with": ["Iron Horizon", "Gym Hero", "Neon Sprint"]
+  },
+  "Library Rain": {
+    "artist": "Paper Lanterns",
+    "description": "The most acoustic and instrumental track in the lofi section. Acousticness of 0.86 and instrumentalness of 0.88 create a near-silent, vinyl-textured atmosphere. The 72 BPM tempo is the slowest in the lofi catalog, perfect for deep focus or winding down.",
+    "listening_contexts": ["deep study", "rainy afternoon", "reading", "late night wind-down"],
+    "standout_features": ["very high acousticness (0.86)", "almost fully instrumental (0.88)", "slowest lofi tempo (72 BPM)"],
+    "decade_context": "2010s lo-fi aesthetic — deliberate warmth and imperfection that evokes analog recording.",
+    "pairs_well_with": ["Midnight Coding", "Focus Flow", "Spacewalk Thoughts"]
+  },
+  "Gym Hero": {
+    "artist": "Max Pulse",
+    "description": "Max Pulse's highest-energy pop track. At 0.93 energy and 0.88 danceability, it is built to sustain physical effort. Lyric density of 0.73 means it has more vocal content than typical workout tracks, adding a motivational layer.",
+    "listening_contexts": ["gym", "HIIT workout", "sprint intervals", "high-intensity work sessions"],
+    "standout_features": ["near-maximum energy (0.93)", "extremely high danceability (0.88)", "high liveliness (0.64) — performance energy"],
+    "decade_context": "2010s pop production — punchy, compressed, radio-ready sound built for volume.",
+    "pairs_well_with": ["Neon Sprint", "Sunrise City", "Storm Runner"]
+  },
+  "Spacewalk Thoughts": {
+    "artist": "Orbit Bloom",
+    "description": "The most purely ambient track in the catalog. Instrumentalness of 0.97 and energy of 0.28 create a near-silence that dissolves into texture. The 1970s release decade reflects its roots in early synthesizer experimentation.",
+    "listening_contexts": ["deep meditation", "sleep onset", "creative daydreaming", "background for reading"],
+    "standout_features": ["almost fully instrumental (0.97)", "lowest energy outside classical (0.28)", "very high acousticness (0.92) for an ambient track"],
+    "decade_context": "1970s experimental ambient — long, evolving textures without conventional melody or rhythm.",
+    "pairs_well_with": ["Library Rain", "Quiet Constellations", "Midnight Coding"]
+  },
+  "Coffee Shop Stories": {
+    "artist": "Slow Stereo",
+    "description": "The only jazz track in the catalog. Instrumentalness of 0.74 preserves the improvisational feel of a live session. The 1960s decade places it in the classic cool-jazz era — warm, unhurried, and sophisticated.",
+    "listening_contexts": ["coffee shop ambiance", "dinner background", "light afternoon work", "social study spaces"],
+    "standout_features": ["highly instrumental (0.74)", "very high acousticness (0.89) — acoustic instruments throughout", "1960s warm production"],
+    "decade_context": "1960s cool jazz — subtle swing, conversational pacing, no electronic instrumentation.",
+    "pairs_well_with": ["Porchlight Letters", "Golden Hour Drive", "Velvet Afterglow"]
+  },
+  "Night Drive Loop": {
+    "artist": "Neon Echo",
+    "description": "Neon Echo's darker, synthwave side. The 1980s production evokes late-night highway driving. Instrumentalness of 0.46 means it has some vocals but they are processed and atmospheric rather than lyric-forward.",
+    "listening_contexts": ["late-night driving", "moody evening work", "noir-themed playlists", "creative writing"],
+    "standout_features": ["moderate energy (0.75) — intense but not exhausting", "1980s synthwave production", "semi-instrumental (0.46) — voices as texture"],
+    "decade_context": "1980s synth aesthetic — analog warmth, minor-key progressions, and neon-lit melancholy.",
+    "pairs_well_with": ["Velvet Afterglow", "Midnight Coding", "Golden Hour Drive"]
+  },
+  "Focus Flow": {
+    "artist": "LoRoom",
+    "description": "LoRoom's explicitly focus-optimized track. At 0.40 energy and 80 BPM, it is slightly more present than Library Rain without crossing into distraction. Instrumentalness of 0.80 keeps vocals out of the way.",
+    "listening_contexts": ["focus work blocks", "studying", "coding", "writing"],
+    "standout_features": ["optimized for focus (mood tag: focused)", "highly instrumental (0.80)", "low liveliness (0.15) — minimal distracting dynamics"],
+    "decade_context": "2020s lo-fi — modern production techniques applied to a deliberately retro aesthetic.",
+    "pairs_well_with": ["Library Rain", "Midnight Coding", "Spacewalk Thoughts"]
+  },
+  "Rooftop Lights": {
+    "artist": "Indigo Parade",
+    "description": "The indie pop outlier: high valence (0.81) and strong danceability (0.82) but from an indie perspective rather than mainstream pop. Energy at 0.76 is high without the aggression of Gym Hero. The uplifting mood tag sets it apart from typical indie introspection.",
+    "listening_contexts": ["city evening walk", "light social gathering", "summer afternoon", "feel-good playlist"],
+    "standout_features": ["high valence (0.81) — genuinely uplifting", "strong danceability (0.82) for an indie track", "higher liveliness (0.58) — lively performance feel"],
+    "decade_context": "2010s indie pop — live-instrument warmth with some electronic layering.",
+    "pairs_well_with": ["Sunrise City", "Mirrorball Fever", "Velvet Afterglow"]
+  },
+  "Neon Sprint": {
+    "artist": "City Static",
+    "description": "The highest-danceability track in the catalog at 0.91 and near-maximum energy at 0.95. City Static's EDM production is built exclusively for movement and peak-energy environments. Minimal acousticness (0.03) confirms full electronic production.",
+    "listening_contexts": ["dance floor", "peak workout moment", "festival", "cardio sprint"],
+    "standout_features": ["highest danceability in catalog (0.91)", "near-maximum energy (0.95)", "2020s EDM production — sub-bass heavy, drop-optimized"],
+    "decade_context": "2020s EDM — maximalist production with dynamics engineered around the drop moment.",
+    "pairs_well_with": ["Gym Hero", "Mirrorball Fever", "Storm Runner"]
+  },
+  "Porchlight Letters": {
+    "artist": "Juniper Hale",
+    "description": "The catalog's folk anchor. Acousticness of 0.93 and energy of 0.31 capture the intimate porch-session feeling. Lyric density of 0.55 means it has more lyrical content than most acoustic tracks — storytelling is central to its identity.",
+    "listening_contexts": ["quiet evening", "campfire", "journaling", "countryside drive"],
+    "standout_features": ["very high acousticness (0.93)", "1990s folk production — natural room sound", "lyric-forward (0.55) — storytelling focus"],
+    "decade_context": "1990s American folk revival — acoustic guitar, close-mic vocals, minimal studio treatment.",
+    "pairs_well_with": ["Golden Hour Drive", "Coffee Shop Stories", "Spacewalk Thoughts"]
+  },
+  "Velvet Afterglow": {
+    "artist": "Blue Meridian",
+    "description": "Blue Meridian's R&B slow-burn. At 0.58 energy and 0.72 valence, it occupies a warm middle ground — neither passive nor energetic. The sensual mood tag and 2000s production place it in the neo-soul tradition.",
+    "listening_contexts": ["dinner for two", "late-night winding down", "romantic setting", "evening background"],
+    "standout_features": ["warm mid-energy (0.58) — groovy without being demanding", "high danceability for its energy level (0.77)", "2000s neo-soul production"],
+    "decade_context": "2000s R&B — rich layering, smooth vocal production, and a groove-forward rhythm section.",
+    "pairs_well_with": ["Night Drive Loop", "Golden Hour Drive", "Coffee Shop Stories"]
+  },
+  "Iron Horizon": {
+    "artist": "Ash Atlas",
+    "description": "The most intense track in the catalog. Energy 0.97, 168 BPM, and instrumentalness of 0.00 mean vocals are present and aggressive throughout. The 1990s decade places it in the heavy metal era of maximum amplification.",
+    "listening_contexts": ["extreme workout", "competitive gaming", "releasing frustration", "maximum intensity moments"],
+    "standout_features": ["near-maximum energy in catalog (0.97)", "fastest tempo (168 BPM)", "fully vocal — lyrics are central, not atmospheric"],
+    "decade_context": "1990s heavy metal — uncompressed loudness, distorted power chords, aggressive vocal delivery.",
+    "pairs_well_with": ["Storm Runner", "Neon Sprint", "Gym Hero"]
+  },
+  "Golden Hour Drive": {
+    "artist": "Sierra Vale",
+    "description": "Sierra Vale's nostalgic country track. The 1970s decade reflects classic country before the pop crossover era. Moderate energy (0.52) and high valence (0.76) create the warm, wistful feeling of a long sunset drive on an empty road.",
+    "listening_contexts": ["road trip", "sunset drive", "nostalgic evening", "barbecue background"],
+    "standout_features": ["1970s classic country production — pedal steel, warm acoustic", "high valence (0.76) despite nostalgic mood", "moderate acousticness (0.57) — mix of acoustic and electric"],
+    "decade_context": "1970s outlaw country — storytelling lyrics, organic production, and emotional directness.",
+    "pairs_well_with": ["Porchlight Letters", "Coffee Shop Stories", "Velvet Afterglow"]
+  },
+  "Mirrorball Fever": {
+    "artist": "Luna Ray",
+    "description": "Luna Ray's disco peak. Highest valence in the catalog at 0.90 and very high danceability (0.89). The 1970s decade anchors it in the original four-on-the-floor era. Liveliness of 0.81 is the highest in the catalog, suggesting a performance-event atmosphere.",
+    "listening_contexts": ["dance floor", "retro party", "celebration", "high-energy social events"],
+    "standout_features": ["highest valence in catalog (0.90)", "highest liveliness in catalog (0.81) — peak performance energy", "1970s disco production — strings, brass, and driving bass"],
+    "decade_context": "1970s disco — orchestral arrangements over a relentless four-on-the-floor beat.",
+    "pairs_well_with": ["Neon Sprint", "Sunrise City", "Rooftop Lights"]
+  },
+  "Night Market Pulse": {
+    "artist": "Solar Tide",
+    "description": "Solar Tide's hip hop entry. Lyric density of 0.88 is the highest in the catalog — this track is lyric-forward in the hip hop tradition. Danceability of 0.84 and energy of 0.69 balance movement with a controlled, deliberate groove.",
+    "listening_contexts": ["confident morning", "focus with energy", "commute", "creative work with rhythm"],
+    "standout_features": ["highest lyric density in catalog (0.88) — dense wordplay", "strong danceability (0.84)", "2010s hip hop production — crisp 808 kicks, punchy hi-hats"],
+    "decade_context": "2010s hip hop — clean digital production with emphasis on lyrical delivery and rhythmic precision.",
+    "pairs_well_with": ["Gym Hero", "Neon Sprint", "Rooftop Lights"]
+  },
+  "Quiet Constellations": {
+    "artist": "Aria Vale",
+    "description": "The most peaceful and sparse track in the entire catalog. Energy of 0.18 and instrumentalness of 0.99 create near-silence — Aria Vale's classical composition has essentially no vocals and the slowest tempo (58 BPM). The 1900s decade reflects its roots in pre-recording-era classical tradition.",
+    "listening_contexts": ["deep meditation", "pre-sleep wind-down", "reading classical literature", "maximum calm"],
+    "standout_features": ["lowest energy in catalog (0.18)", "fully instrumental (0.99) — no vocals whatsoever", "slowest tempo (58 BPM) — unhurried to the point of stillness"],
+    "decade_context": "Early 20th century classical — acoustic instruments only, no amplification, performance-hall dynamics.",
+    "pairs_well_with": ["Spacewalk Thoughts", "Library Rain", "Porchlight Letters"]
+  }
+}

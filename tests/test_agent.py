@@ -139,14 +139,14 @@ def test_format_recs_shows_title_and_score(agent):
 # ------------------------------------------------------------------
 
 def test_build_user_message_contains_profile_fields(agent, chill_prefs):
-    msg = agent._build_user_message(chill_prefs, k=5)
+    msg = agent._build_user_message(chill_prefs, k=5, specialized=False)
     assert "lofi" in msg
     assert "chill" in msg
     assert "0.35" in msg
 
 
 def test_build_user_message_k_is_included(agent, chill_prefs):
-    msg = agent._build_user_message(chill_prefs, k=3)
+    msg = agent._build_user_message(chill_prefs, k=3, specialized=False)
     assert "3" in msg
 
 

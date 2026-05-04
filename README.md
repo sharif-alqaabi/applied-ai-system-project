@@ -133,13 +133,23 @@ python -m src.main
 python -m src.main --ai
 ```
 
+**Specialized few-shot mode** — side-by-side standard vs. constrained style (requires API key):
+```bash
+python -m src.main --specialized
+```
+
+**Reliability benchmark + RAG richness report** (no API key needed):
+```bash
+python -m src.eval
+```
+
 ### 6. Run the test suite
 
 ```bash
 pytest
 ```
 
-Expected output: **26 passed**.
+Expected output: **77 passed**.
 
 ---
 
@@ -521,6 +531,71 @@ production system is something I want to keep exploring.
 
 ---
 
+## Stretch Features
+
+All four optional stretch features are implemented.
+
+### +2 RAG Enhancement — second knowledge source
+
+`data/song_annotations.json` adds per-song facts for all 18 catalog tracks:
+exact feature values, decade context, listening environments, and pairing
+suggestions. A new `retrieve_song_knowledge` tool lets the agent call this
+second source after seeing the initial ranked list, so it can cite specific
+numbers from the actual songs rather than only generic genre descriptions.
+
+`compare_rag_sources()` in `src/eval.py` measures the improvement:
+
+```
+  Profile              1-source (chars)   2-source (chars)      Gain
+  Chill Lofi                        473              1,792     +279%
+  High-Energy Pop                   458              1,758     +284%
+  Folk Nostalgic                    492              1,931     +292%
+  AVERAGE                           474              1,827     +285%
+```
+
+Dual-source retrieval provides **+285% more context** on average, enabling
+explanations that reference specific BPM, acousticness, and decade notes.
+
+### +2 Agentic Workflow Enhancement — observable planning chain
+
+A `log_plan` tool forces Claude to declare its `intent`, `strategy`, and
+`focus_areas` *before* calling any other tool. Every plan entry is stored in
+`_planning_chain` and returned in the result dict. Running `--ai` mode prints
+the chain under **Planning Chain (intermediate steps)**, making the full
+decision sequence visible — not just the final answer.
+
+The agent now calls five tools in sequence: `log_plan` → `retrieve_music_knowledge`
+→ `get_recommendations` → `retrieve_song_knowledge` → `evaluate_fit` → (retry if weak).
+
+### +2 Fine-Tuning / Specialization — few-shot style constraints
+
+`_FEW_SHOT_ADDENDUM` in `src/agent.py` appends two labeled examples to the
+system prompt when `specialized=True`. The examples demonstrate the required
+style: cite exact energy values, reference retrieved knowledge, end with
+"Why this fits your vibe:".
+
+`evaluate_explanation_quality(text)` in `src/eval.py` measures the difference
+across four criteria:
+
+| Criterion | Standard mode | Specialized mode |
+|---|---|---|
+| Mentions exact energy value | Inconsistent | Consistent |
+| References retrieved knowledge | Inconsistent | Always |
+| Includes "Why this fits your vibe:" | Never | Always |
+| Cites specific audio feature | Sometimes | Always |
+
+Run `python -m src.main --specialized` to see both modes side-by-side on the
+same profile.
+
+### +2 Test Harness / Evaluation Script
+
+`src/eval.py` is the full evaluation harness (see Testing Summary above).
+It produces pass/fail results, confidence scores, and the RAG richness
+comparison in a single run. Exit code is 0 (all pass) or 1 (any fail)
+for CI integration.
+
+---
+
 ## Project Structure
 
 ```
@@ -530,18 +605,21 @@ applied-ai-system-project/
 │   └── render_diagram.py         # script used to generate the diagram
 ├── data/
 │   ├── songs.csv                 # 18-song catalog, 13 features each
-│   └── music_knowledge.json      # RAG knowledge base (genres + moods)
+│   ├── music_knowledge.json      # RAG source 1: genre + mood descriptions
+│   └── song_annotations.json     # RAG source 2: per-song facts (stretch)
 ├── src/
-│   ├── main.py                   # CLI entry point (--ai flag for agentic mode)
+│   ├── main.py                   # CLI: --ai, --specialized flags
 │   ├── recommender.py            # scoring engine, confidence scoring, diversity penalty
-│   ├── rag.py                    # knowledge base loader + context retriever
-│   ├── agent.py                  # MusicAgent — Claude agentic loop
-│   └── eval.py                   # reliability benchmark + confidence report
+│   ├── rag.py                    # multi-source RAG: genre/mood + song annotations
+│   ├── agent.py                  # MusicAgent — log_plan, 5 tools, few-shot mode
+│   └── eval.py                   # benchmark, RAG comparison, quality metrics
 ├── tests/
 │   ├── test_recommender.py       # OOP recommender tests (2 tests)
 │   ├── test_rag.py               # RAG retrieval tests (14 tests)
 │   ├── test_agent.py             # agent helper tests (11 tests)
-│   └── test_eval.py              # confidence scoring + benchmark tests (23 tests)
+│   ├── test_eval.py              # confidence + benchmark tests (23 tests)
+│   └── test_stretch.py           # stretch feature tests (27 tests)
+├── ai_responsibility.md
 ├── model_card.md
 ├── reflection.md
 └── requirements.txt

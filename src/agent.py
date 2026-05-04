@@ -1,61 +1,149 @@
 """
 Agentic music recommender powered by the Claude API.
 
-Implements a plan-act-check loop:
-  1. Plan  — retrieve genre/mood knowledge from the RAG knowledge base
-  2. Act   — run the scoring-based recommender to get song candidates
-  3. Check — evaluate whether the top result genuinely fits the user
-  4. Refine — if fit is weak, retry with a different scoring mode
+Stretch features implemented here:
 
-The retrieved context actively changes what Claude says and whether it
-accepts the initial ranking or asks for a re-run, making RAG and the
-agentic loop both fully integrated into the recommendation output.
+  AGENTIC WORKFLOW ENHANCEMENT
+    A log_plan tool forces Claude to declare its intent, tool strategy, and
+    focus areas before acting.  Every plan entry is stored in _planning_chain
+    and returned in the result dict, making the full reasoning chain
+    observable in the CLI output.
+
+  RAG ENHANCEMENT
+    A retrieve_song_knowledge tool gives Claude access to the second knowledge
+    source (song_annotations.json), enabling it to cite specific feature
+    values, decade context, and listening environments for individual tracks.
+
+  FINE-TUNING / SPECIALIZATION
+    Passing specialized=True to run() appends two few-shot examples to the
+    system prompt that constrain explanation style: cite exact energy values,
+    reference retrieved knowledge, and end every recommendation with a
+    'Why this fits your vibe:' sentence.  evaluate_explanation_quality() in
+    eval.py measures the difference.
 """
 
 import logging
 import os
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 import anthropic
 
-from src.rag import load_knowledge_base, retrieve_context
+from src.rag import (
+    load_knowledge_base,
+    load_song_annotations,
+    retrieve_context,
+    retrieve_song_context,
+)
 from src.recommender import load_songs, recommend_songs_by_mode
 
 logger = logging.getLogger(__name__)
 
-_SYSTEM_PROMPT = """\
-You are an expert music recommendation assistant with deep knowledge of \
+# ── System prompts ─────────────────────────────────────────────────────────
+
+_BASE_SYSTEM_PROMPT = """\
+You are an expert music recommendation assistant with deep knowledge of
 music genres, moods, and audio features.
 
-Your job is to help listeners discover songs that truly match their taste. \
-You have three tools available:
+Your job is to help listeners discover songs that truly match their taste.
+You have four tools available:
 
-  • retrieve_music_knowledge — look up rich descriptions of genres and moods \
-from a curated knowledge base (RAG step)
-  • get_recommendations — run the scoring engine and get ranked song candidates
-  • evaluate_fit — assess whether the top result genuinely matches the \
-listener's intent
+  log_plan               — declare your intent and tool strategy FIRST
+  retrieve_music_knowledge — look up genre/mood descriptions (broad context)
+  retrieve_song_knowledge  — look up per-song facts for specific titles
+  get_recommendations    — run the scoring engine and get ranked candidates
+  evaluate_fit           — assess whether the top result fits the listener
 
 Workflow you MUST follow:
-1. Call retrieve_music_knowledge for the listener's genre and mood first.
-2. Call get_recommendations with mode "balanced".
-3. Call evaluate_fit on the top result.
-4. If fit is weak (score < 4), call get_recommendations again with a better \
-mode (genre-first, mood-first, or energy-focused), then re-evaluate.
-5. Once satisfied, write a short, friendly recommendation summary that \
-references specific audio features and explains why each song fits.
-
-Be concrete. Reference energy levels, mood tags, and genre knowledge from \
-what you retrieved. Do not just list scores.\
+1. Call log_plan to declare what you will do and why.
+2. Call retrieve_music_knowledge for the listener's genre and mood.
+3. Call get_recommendations with mode "balanced".
+4. Call retrieve_song_knowledge for the top 2–3 results to get specific facts.
+5. Call evaluate_fit on the top result.
+6. If fit is weak (score < 4), call get_recommendations with a better mode,
+   then re-evaluate.
+7. Write a recommendation summary that cites specific feature values from what
+   you retrieved — do not invent facts.\
 """
+
+_FEW_SHOT_ADDENDUM = """
+
+=== SPECIALIZATION EXAMPLES ===
+
+Below are two examples of the explanation style required in specialized mode.
+Match this style exactly: cite the exact energy value, reference retrieved
+knowledge, and end every top recommendation with a "Why this fits your vibe:"
+sentence.
+
+--- Example 1 ---
+Listener: lofi, chill, energy 0.35, acoustic
+
+Top recommendation: Library Rain by Paper Lanterns
+
+Library Rain is your strongest match. The genre/mood knowledge confirms that
+lofi typically operates between 0.20–0.55 energy — Library Rain sits at
+exactly 0.35, landing dead-center in that range. Its acousticness of 0.86
+pairs directly with your acoustic preference, and the song annotation notes
+its 72 BPM tempo creates the unhurried pace that defines the chill mood.
+Instrumentalness of 0.88 means near-zero vocal content, so nothing will
+break your focus.
+
+Why this fits your vibe: This is the sonic equivalent of a productive rainy
+afternoon — slow, textured, and quiet enough to think in.
+
+--- Example 2 ---
+Listener: rock, intense, energy 0.92, not acoustic
+
+Top recommendation: Storm Runner by Voltline
+
+Storm Runner hits every target. The knowledge base notes rock typically runs
+0.60–1.0 energy; Storm Runner at 0.91 matches your 0.92 target within 0.01.
+The song annotation confirms 152 BPM and minimal acousticness (0.10) —
+pure electric production with no acoustic softening. The aggressive mood
+alignment means this track was built for exactly the intensity you want.
+
+Why this fits your vibe: Storm Runner is for the moments when you need music
+to push you — loud, driving, and unrelenting.
+
+=== END EXAMPLES ===
+Always use this style. Every top recommendation must include exact numeric
+values from the retrieved context and end with "Why this fits your vibe:".
+"""
+
+# ── Tool definitions ───────────────────────────────────────────────────────
 
 _TOOLS = [
     {
+        "name": "log_plan",
+        "description": (
+            "Declare your reasoning plan BEFORE taking any action. "
+            "Call this first every time so your decision chain is observable."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "intent": {
+                    "type": "string",
+                    "description": "What you are trying to accomplish for this listener.",
+                },
+                "strategy": {
+                    "type": "string",
+                    "description": "Which tools you plan to call and in what order.",
+                },
+                "focus_areas": {
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Specific profile aspects you will prioritize (e.g. energy, genre match).",
+                },
+            },
+            "required": ["intent", "strategy"],
+        },
+    },
+    {
         "name": "retrieve_music_knowledge",
         "description": (
-            "Look up music knowledge about specific genres and moods from the "
-            "curated knowledge base. Always call this first so you understand "
-            "what the listener actually wants before recommending anything."
+            "Look up broad genre/mood descriptions from the primary knowledge base. "
+            "Use this to understand the typical energy range, common moods, and "
+            "related genres before recommending."
         ),
         "input_schema": {
             "type": "object",
@@ -75,9 +163,28 @@ _TOOLS = [
         },
     },
     {
+        "name": "retrieve_song_knowledge",
+        "description": (
+            "Look up per-song annotation facts for specific tracks — exact feature "
+            "values, decade context, listening environments, and pairing suggestions. "
+            "Call this after get_recommendations to get specific facts about the top results."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "song_titles": {
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "Exact song titles to retrieve annotations for.",
+                },
+            },
+            "required": ["song_titles"],
+        },
+    },
+    {
         "name": "get_recommendations",
         "description": (
-            "Run the music recommender engine and return ranked song candidates "
+            "Run the scoring engine and return ranked song candidates "
             "for the current listener profile."
         ),
         "input_schema": {
@@ -88,7 +195,7 @@ _TOOLS = [
                     "enum": ["balanced", "genre-first", "mood-first", "energy-focused"],
                     "description": (
                         "Scoring strategy. Start with 'balanced'. Switch modes "
-                        "if the top result evaluated as a weak fit."
+                        "if evaluate_fit returns a weak result."
                     ),
                 },
                 "k": {
@@ -104,18 +211,15 @@ _TOOLS = [
         "name": "evaluate_fit",
         "description": (
             "Evaluate whether a specific song is a strong fit for the listener. "
-            "Returns a numeric fit score and plain-language notes."
+            "Returns a numeric fit score (0–7) and plain-language advice."
         ),
         "input_schema": {
             "type": "object",
             "properties": {
-                "song_title": {"type": "string", "description": "Title of the song."},
-                "song_genre": {"type": "string", "description": "Genre of the song."},
-                "song_mood": {"type": "string", "description": "Mood tag of the song."},
-                "song_energy": {
-                    "type": "number",
-                    "description": "Energy level of the song (0.0–1.0).",
-                },
+                "song_title": {"type": "string"},
+                "song_genre": {"type": "string"},
+                "song_mood": {"type": "string"},
+                "song_energy": {"type": "number"},
             },
             "required": ["song_title", "song_genre", "song_mood", "song_energy"],
         },
@@ -123,53 +227,79 @@ _TOOLS = [
 ]
 
 
+# ── MusicAgent ─────────────────────────────────────────────────────────────
+
 class MusicAgent:
     """
-    Agentic music recommender.
-
-    Wraps the scoring-based recommender with a Claude-powered plan-act-check
-    loop. The agent retrieves knowledge (RAG), scores candidates, evaluates
-    fit, and may retry with a different scoring mode before returning a
-    natural-language recommendation.
+    Agentic music recommender with observable planning chain and
+    optional few-shot specialization.
     """
 
-    MAX_ITERATIONS = 8
+    MAX_ITERATIONS = 10
 
     def __init__(
         self,
         songs_path: str = "data/songs.csv",
         knowledge_path: str = "data/music_knowledge.json",
+        annotations_path: str = "data/song_annotations.json",
     ) -> None:
         self.songs = load_songs(songs_path)
         self.knowledge_base = load_knowledge_base(knowledge_path)
+        self.annotations = load_song_annotations(annotations_path)
         self.client = anthropic.Anthropic()
         self._user_prefs: Dict = {}
         self._recs_cache: Dict[str, List[Tuple]] = {}
-        logger.info("MusicAgent ready — %d songs loaded", len(self.songs))
+        self._planning_chain: List[Dict] = []
+        logger.info(
+            "MusicAgent ready — %d songs, %d annotations loaded",
+            len(self.songs),
+            len(self.annotations),
+        )
 
     # ------------------------------------------------------------------
     # Public API
     # ------------------------------------------------------------------
 
-    def run(self, user_prefs: Dict, k: int = 5) -> Dict[str, Any]:
+    def run(
+        self,
+        user_prefs: Dict,
+        k: int = 5,
+        specialized: bool = False,
+    ) -> Dict[str, Any]:
         """
         Run the full agentic recommendation loop.
 
-        Returns a dict with:
-          explanation   — natural-language recommendation text from Claude
+        Parameters
+        ----------
+        user_prefs  : listener profile dict
+        k           : number of songs to recommend
+        specialized : if True, append few-shot examples to the system prompt
+                      to constrain explanation style (measurably different output)
+
+        Returns
+        -------
+        dict with keys:
+          explanation    — natural-language recommendation text
           recommendations — list of (song_dict, score, reason_str) tuples
-          iterations    — how many agent turns were used
-          mode_used     — which scoring mode produced the final result
+          iterations     — number of agent turns used
+          mode_used      — final scoring mode
+          planning_chain — list of plan dicts logged by log_plan calls
+          specialized    — whether few-shot mode was active
         """
         self._user_prefs = user_prefs
         self._recs_cache = {}
+        self._planning_chain = []
+
+        system_text = _BASE_SYSTEM_PROMPT
+        if specialized:
+            system_text += _FEW_SHOT_ADDENDUM
 
         messages: List[Dict] = [
-            {"role": "user", "content": self._build_user_message(user_prefs, k)}
+            {"role": "user", "content": self._build_user_message(user_prefs, k, specialized)}
         ]
 
         for iteration in range(1, self.MAX_ITERATIONS + 1):
-            logger.info("Agent iteration %d", iteration)
+            logger.info("Agent iteration %d (specialized=%s)", iteration, specialized)
 
             response = self.client.messages.create(
                 model="claude-sonnet-4-6",
@@ -177,7 +307,7 @@ class MusicAgent:
                 system=[
                     {
                         "type": "text",
-                        "text": _SYSTEM_PROMPT,
+                        "text": system_text,
                         "cache_control": {"type": "ephemeral"},
                     }
                 ],
@@ -193,12 +323,17 @@ class MusicAgent:
                     "No recommendation text generated.",
                 )
                 best_recs, mode_used = self._best_cached_recs()
-                logger.info("Agent finished in %d iterations, mode=%s", iteration, mode_used)
+                logger.info(
+                    "Agent finished in %d iterations, mode=%s, plans=%d",
+                    iteration, mode_used, len(self._planning_chain),
+                )
                 return {
                     "explanation": final_text,
                     "recommendations": best_recs,
                     "iterations": iteration,
                     "mode_used": mode_used,
+                    "planning_chain": list(self._planning_chain),
+                    "specialized": specialized,
                 }
 
             if response.stop_reason == "tool_use":
@@ -212,13 +347,20 @@ class MusicAgent:
             "recommendations": best_recs,
             "iterations": self.MAX_ITERATIONS,
             "mode_used": mode_used,
+            "planning_chain": list(self._planning_chain),
+            "specialized": specialized,
         }
 
     # ------------------------------------------------------------------
     # Internal helpers
     # ------------------------------------------------------------------
 
-    def _build_user_message(self, user_prefs: Dict, k: int) -> str:
+    def _build_user_message(self, user_prefs: Dict, k: int, specialized: bool) -> str:
+        style_note = (
+            "  Note: specialized style is active — cite exact numeric values "
+            "and end each top recommendation with 'Why this fits your vibe:'.\n"
+            if specialized else ""
+        )
         return (
             f"Please recommend {k} songs for a listener with these preferences:\n\n"
             f"  Favorite genre  : {user_prefs.get('genre', 'not specified')}\n"
@@ -226,9 +368,10 @@ class MusicAgent:
             f"  Energy target   : {user_prefs.get('energy', 'not specified')} "
             f"(0 = very calm, 1 = very intense)\n"
             f"  Likes acoustic  : {user_prefs.get('likes_acoustic', 'not specified')}\n"
-            f"  Danceability    : {user_prefs.get('danceability', 'not specified')}\n\n"
-            "Follow your workflow: retrieve knowledge first, then get candidates, "
-            "then evaluate the top result before writing your final answer."
+            f"  Danceability    : {user_prefs.get('danceability', 'not specified')}\n"
+            f"{style_note}\n"
+            "Follow your workflow: log_plan first, then retrieve knowledge, "
+            "get candidates, look up song annotations, evaluate fit, and write your answer."
         )
 
     def _handle_tool_calls(self, content_blocks: List, k: int) -> List[Dict]:
@@ -243,11 +386,31 @@ class MusicAgent:
         return results
 
     def _dispatch(self, name: str, inputs: Dict, k: int) -> str:
+        if name == "log_plan":
+            entry = {
+                "intent": inputs.get("intent", ""),
+                "strategy": inputs.get("strategy", ""),
+                "focus_areas": inputs.get("focus_areas", []),
+            }
+            self._planning_chain.append(entry)
+            logger.info(
+                "Plan recorded — intent: %s | focus: %s",
+                entry["intent"][:80],
+                entry["focus_areas"],
+            )
+            return "Plan recorded. Proceed with your strategy."
+
         if name == "retrieve_music_knowledge":
             genres = inputs.get("genres", [])
             moods = inputs.get("moods", [])
             context = retrieve_context(genres, moods, self.knowledge_base)
-            logger.info("RAG retrieved context for genres=%s moods=%s", genres, moods)
+            logger.info("RAG source 1: genre/mood context for %s / %s", genres, moods)
+            return context
+
+        if name == "retrieve_song_knowledge":
+            titles = inputs.get("song_titles", [])
+            context = retrieve_song_context(titles, self.annotations)
+            logger.info("RAG source 2: song annotations for %s", titles)
             return context
 
         if name == "get_recommendations":
@@ -257,7 +420,7 @@ class MusicAgent:
                 self._user_prefs, self.songs, mode_name=mode, k=num
             )
             self._recs_cache[mode] = recs
-            logger.info("Recommender returned %d results using mode='%s'", len(recs), mode)
+            logger.info("Recommender: %d results via mode='%s'", len(recs), mode)
             return self._format_recs(recs)
 
         if name == "evaluate_fit":
@@ -280,10 +443,6 @@ class MusicAgent:
         return "\n\n".join(lines)
 
     def _evaluate_fit(self, inputs: Dict) -> str:
-        """
-        Rule-based fit check that the agent can call to decide whether to
-        accept the current ranking or switch scoring mode.
-        """
         user_genre = self._user_prefs.get("genre", "")
         user_mood = self._user_prefs.get("mood", "")
         user_energy = float(self._user_prefs.get("energy", 0.5))
@@ -341,7 +500,6 @@ class MusicAgent:
         )
 
     def _best_cached_recs(self) -> Tuple[List[Tuple], str]:
-        """Return the cached recommendations from the most recently used mode."""
         if not self._recs_cache:
             return [], "none"
         mode = list(self._recs_cache.keys())[-1]

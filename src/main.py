@@ -128,58 +128,107 @@ def run_mode_demo(profile_name: str, mode_name: str, user_prefs: dict, songs: li
     print_recommendations(f"{profile_name} ({mode_name})", recommendations)
 
 
-def run_ai_mode() -> None:
-    """
-    Run the Claude-powered agentic recommender for two demo profiles.
-
-    The agent:
-      1. Retrieves genre/mood knowledge from the RAG knowledge base
-      2. Runs the scoring recommender to get candidates
-      3. Evaluates whether the top result fits the listener
-      4. Retries with a different scoring mode if fit is weak
-      5. Writes a natural-language summary referencing retrieved context
-    """
+def _check_api_key() -> None:
     if not os.environ.get("ANTHROPIC_API_KEY"):
         print(
             "\n[ERROR] ANTHROPIC_API_KEY is not set.\n"
-            "Export it before running --ai mode:\n"
+            "Export it before running --ai or --specialized mode:\n"
             "  export ANTHROPIC_API_KEY=your-key-here\n"
         )
         sys.exit(1)
 
+
+def _print_ai_result(profile_name: str, prefs: dict, result: dict) -> None:
+    """Print a formatted block for one agentic recommendation result."""
+    print(f"\n{'='*60}")
+    print(f"  AI-Enhanced Recommendations — {profile_name}")
+    if result.get("specialized"):
+        print("  Mode: SPECIALIZED (few-shot style constraints active)")
+    print(f"{'='*60}")
+    print(f"  Genre: {prefs['genre']}  |  Mood: {prefs['mood']}  |  Energy: {prefs['energy']}")
+    print()
+
+    # Show the planning chain (observable intermediate steps)
+    chain = result.get("planning_chain", [])
+    if chain:
+        print("  --- Planning Chain (intermediate steps) ---")
+        for step_num, step in enumerate(chain, start=1):
+            print(f"  Step {step_num}: {step['intent']}")
+            if step.get("focus_areas"):
+                print(f"           Focus: {', '.join(step['focus_areas'])}")
+        print()
+
+    print(result["explanation"])
+    print(
+        f"\n  [Agent: {result['iterations']} iteration(s), "
+        f"mode={result['mode_used']}, plans={len(chain)}]"
+    )
+
+    if result["recommendations"]:
+        print("\n  Final ranked songs:")
+        for i, (song, score, _) in enumerate(result["recommendations"], start=1):
+            print(f"    {i}. {song['title']} by {song['artist']}  (score: {score:.2f})")
+
+
+def run_ai_mode() -> None:
+    """
+    Run the agentic recommender for two demo profiles.
+
+    Demonstrates: RAG (genre/mood + song annotations), agentic plan-act-check
+    loop with observable planning chain, and multi-source context retrieval.
+    """
+    _check_api_key()
     logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 
     from src.agent import MusicAgent
 
     agent = MusicAgent()
 
-    demo_profiles = ["Chill Lofi", "High-Energy Pop"]
-
-    for profile_name in demo_profiles:
+    for profile_name in ["Chill Lofi", "High-Energy Pop"]:
         prefs = PROFILE_LIBRARY[profile_name]
-        print(f"\n{'='*60}")
-        print(f"  AI-Enhanced Recommendations — {profile_name}")
-        print(f"{'='*60}")
-        print(f"  Genre: {prefs['genre']}  |  Mood: {prefs['mood']}  |  Energy: {prefs['energy']}")
-        print()
+        result = agent.run(prefs, k=5, specialized=False)
+        _print_ai_result(profile_name, prefs, result)
 
-        result = agent.run(prefs, k=5)
 
-        print(result["explanation"])
-        print(
-            f"\n[Agent used {result['iterations']} iteration(s), "
-            f"final scoring mode: {result['mode_used']}]"
-        )
+def run_specialized_mode() -> None:
+    """
+    Side-by-side comparison of standard vs. specialized (few-shot) explanations.
 
-        if result["recommendations"]:
-            print("\nFinal ranked songs:")
-            for i, (song, score, reasons) in enumerate(result["recommendations"], start=1):
-                print(f"  {i}. {song['title']} by {song['artist']}  (score: {score:.2f})")
+    The specialized mode appends two few-shot examples to the system prompt,
+    constraining explanation style: cite exact energy values, reference
+    retrieved knowledge, and end with 'Why this fits your vibe:'.
+
+    Run src/eval.py to see the measurable quality difference.
+    """
+    _check_api_key()
+    logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
+
+    from src.agent import MusicAgent
+
+    agent = MusicAgent()
+    profile_name = "Chill Lofi"
+    prefs = PROFILE_LIBRARY[profile_name]
+
+    print(f"\n{'#'*60}")
+    print("  SPECIALIZATION DEMO: Standard vs. Few-Shot Style")
+    print(f"  Profile: {profile_name}")
+    print(f"{'#'*60}")
+
+    print("\n  Running STANDARD mode...")
+    standard = agent.run(prefs, k=3, specialized=False)
+    _print_ai_result(f"{profile_name} (standard)", prefs, standard)
+
+    print("\n  Running SPECIALIZED mode (few-shot examples active)...")
+    specialized = agent.run(prefs, k=3, specialized=True)
+    _print_ai_result(f"{profile_name} (specialized)", prefs, specialized)
 
 
 def main() -> None:
     if "--ai" in sys.argv:
         run_ai_mode()
+        return
+    if "--specialized" in sys.argv:
+        run_specialized_mode()
         return
 
     songs = load_songs("data/songs.csv")
